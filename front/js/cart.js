@@ -4,8 +4,9 @@ document.addEventListener('DOMContentLoaded', getItemsFromCart);
 [ 'click', 'change' ].forEach(e => document.addEventListener(e, findClass));
 
 const order = document.querySelector('.cart__order__form');
-order.addEventListener('submit', checkForm);
 const cart__items = document.querySelector('#cart__items');
+
+order.addEventListener('submit', validateForm);
 
 // let cart;
 let apiResponseData;
@@ -132,45 +133,104 @@ function getPriceQuantity() {
 }
 
 
-/* const test = {
-    contact: {
-        firstName: 'test',
-        lastName: 'test',
-        address: 'test',
-        city: 'test',
-        email: 'test'
-    },
-    products: [ 'a6ec5b49bd164d7fbe10f37b6363f9fb', '034707184e8e4eefb46400b5a3774b5f' ]
-} */
 
-async function bla(test) {
+//validate form fields
+function validateForm(event) {
+    event.preventDefault();
+
+    const INPUTPATTERN = /^[a-zA-Z]+[\--]*[a-zA-Z]*(\s\w+)*[^\_|\s|\--]$/;
+    const EMAILPATTERN = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    const ADRESSPATTERN = /^[\w]+[a-zA-Z]*(\s\w+)*[^\_|\s|\-]$/;
+
+    let email = document.querySelector('#email');
+    let address = document.querySelector('#address');
+    let formValidated = 1;
+
+    //text fields not address
+    let textInputs = document.querySelectorAll('[type=text]:not(#address)');
+    textInputs.forEach((element => {
+        if (INPUTPATTERN.test(element.value)) {
+            console.log(element.value);
+        }
+        else {
+            element.nextElementSibling.textContent = "Text should start with letter"
+            formValidated = 0;
+        }
+    }))
+    if (EMAILPATTERN.test(email.value)) {
+    } else {
+        email.nextElementSibling.textContent = "Text should start with letter"
+        formValidated = 0;
+    }
+    if (ADRESSPATTERN.test(address.value)) {
+    } else {
+        address.nextElementSibling.textContent = "Text should start with letter"
+        formValidated = 0;
+    }
+    if (formValidated) {
+        checkForm()
+    } else {
+        console.log("form not validated");
+    }
+}
+
+
+function checkForm(event) {
+    const firstName = document.querySelector('#firstName').value;
+    const lastName = document.querySelector('#lastName').value;
+    const address = document.querySelector('#address').value;
+    const city = document.querySelector('#city').value;
+    const email = document.querySelector('#email').value;
+    const form = document.querySelector('.cart__order__form');
+    const textError = document.querySelectorAll('[id*=ErrorMsg]')
+
+
+    //create produt array using cart element id
+    const cart = JSON.parse(localStorage.getItem('cart'));
+    let products = [];
+    if (!cart) {
+        console.log('error');
+    } else {
+        cart.forEach(element => {
+            products.push(element.productId);
+        })
+    }
+
+    //create contact object from input fields (ex: contact = {firstName:firstName,lastName:lastName} )
+    const contact = {
+        firstName, lastName, address, city, email
+    };
+
+    //create object to POST to API
+    const orderData = {
+        contact, products
+    }
+
+
+    //delete form error messages and reset form fields
+    textError.forEach(element => element.textContent = '')
+    form.reset();
+
+    // console.log(orderData);
+    postToAPI(orderData);
+}
+
+
+async function postToAPI(orderData) {
+
     const reponse = await fetch('http://127.0.0.1:3000/api/products/order', {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify(test)
+        body: JSON.stringify(orderData)
     });
     const data = await reponse.json();
     console.log(data);
+
+    confirmationPage(data);
 }
 
-// bla(test);
-
-function checkForm(event) {
-    event.preventDefault();
-    const firstName = document.querySelector('#firstName').value;
-    const lastName = document.querySelector('#lastName');
-    const address = document.querySelector('#address');
-    const city = document.querySelector('#city');
-    const email = document.querySelector('#email');
-    const cart = JSON.parse(localStorage.getItem('cart'));
-    if (!cart) {
-        console.log('error');
-    } else {
-        const test = {};
-        test.contact[ 'firstName2' ] = firstName;
-        console.log(test);
-    }
-
+function confirmationPage(data) {
+    window.location.href = `./confirmation.html?orderId=${data.orderId}`
 }
