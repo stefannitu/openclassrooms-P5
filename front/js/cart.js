@@ -55,31 +55,36 @@ function createHTML(apiData) {
                     </div>
                   </div>
                 </div>
-              </article>
-        `
+                </article>
+                `
     })
-
     cart__items.innerHTML = articleHTML;
 
     //HTML for cart TOTAL
     getPriceQuantity();
 }
 
-//check if click/change events target is delete button or quantity input
-function findClass(event) {
-    if (event.target.classList.contains('deleteItem')) {
-        const currentArticle = event.target.closest('article');
-        changeQuantity(currentArticle, 'DELETE');
-    } else if (event.target.classList.contains('itemQuantity')) {
-        const currentArticle = event.target.closest('article');
-        const currentItemQuantity = parseInt(event.target.value);
-        if (currentItemQuantity <= 0) {
-            changeQuantity(currentArticle, 'DELETE');
-        } else {
-            changeQuantity(currentArticle, 'MODIFY', currentItemQuantity);
-        }
-
+function getPriceQuantity() {
+    const totalQuantity = document.querySelector('#totalQuantity');
+    const totalPrice = document.querySelector('#totalPrice');
+    let modifiedCart = JSON.parse(localStorage.getItem('cart'));
+    let totalCartArticles = 0;
+    let totalCartPrice = 0;
+    if (!modifiedCart) {
+        cart__items.innerHTML = "<p style='color:red;font-size:1.4rem;font-weight:bold;text-align:center'>There are no items in your cart</p>";
+        totalQuantity.textContent = totalCartArticles;
+        totalPrice.textContent = totalCartPrice;
+        return;
     }
+
+    modifiedCart.forEach(cartElement => {
+        totalCartArticles += cartElement.productQuantity;
+        apiProductId = apiResponseData.findIndex(element => element._id == cartElement.productId)
+        totalCartPrice += apiResponseData[ apiProductId ].price * cartElement.productQuantity;
+
+    })
+    totalQuantity.textContent = totalCartArticles;
+    totalPrice.textContent = totalCartPrice;
 }
 
 
@@ -109,29 +114,22 @@ function changeQuantity(parentArticle, action, currentItemQuantity) {
     getPriceQuantity();
 }
 
-function getPriceQuantity() {
-    const totalQuantity = document.querySelector('#totalQuantity');
-    const totalPrice = document.querySelector('#totalPrice');
-    let modifiedCart = JSON.parse(localStorage.getItem('cart'));
-    let totalCartArticles = 0;
-    let totalCartPrice = 0;
-    if (!modifiedCart) {
-        cart__items.innerHTML = "<p style='color:red;font-size:1.4rem;font-weight:bold;text-align:center'>There are no items in your cart</p>";
-        totalQuantity.textContent = totalCartArticles;
-        totalPrice.textContent = totalCartPrice;
-        return;
+//check if click/change events target is delete button or quantity input
+function findClass(event) {
+    if (event.target.classList.contains('deleteItem')) {
+        const currentArticle = event.target.closest('article');
+        changeQuantity(currentArticle, 'DELETE');
+    } else if (event.target.classList.contains('itemQuantity')) {
+        const currentArticle = event.target.closest('article');
+        const currentItemQuantity = parseInt(event.target.value);
+        if (currentItemQuantity <= 0) {
+            changeQuantity(currentArticle, 'DELETE');
+        } else {
+            changeQuantity(currentArticle, 'MODIFY', currentItemQuantity);
+        }
+
     }
-
-    modifiedCart.forEach(cartElement => {
-        totalCartArticles += cartElement.productQuantity;
-        apiProductId = apiResponseData.findIndex(element => element._id == cartElement.productId)
-        totalCartPrice += apiResponseData[ apiProductId ].price * cartElement.productQuantity;
-
-    })
-    totalQuantity.textContent = totalCartArticles;
-    totalPrice.textContent = totalCartPrice;
 }
-
 
 
 //validate form fields
@@ -146,7 +144,7 @@ function validateForm(event) {
     let address = document.querySelector('#address');
     let formValidated = 1;
 
-    //text fields not address
+    //check if pattern is valid
     let textInputs = document.querySelectorAll('[type=text]:not(#address)');
     textInputs.forEach((element => {
         if (INPUTPATTERN.test(element.value)) {
@@ -174,7 +172,7 @@ function validateForm(event) {
     }
 }
 
-
+// if form passed regex valdiation create object to POST
 function checkForm(event) {
     const firstName = document.querySelector('#firstName').value;
     const lastName = document.querySelector('#lastName').value;
@@ -215,7 +213,7 @@ function checkForm(event) {
     postToAPI(orderData);
 }
 
-
+//POST to API
 async function postToAPI(orderData) {
 
     const reponse = await fetch('http://127.0.0.1:3000/api/products/order', {
@@ -226,11 +224,10 @@ async function postToAPI(orderData) {
         body: JSON.stringify(orderData)
     });
     const data = await reponse.json();
-    console.log(data);
-
     confirmationPage(data);
 }
 
+// create URL with data from POST and redirect to new page
 function confirmationPage(data) {
     window.location.href = `./confirmation.html?orderId=${data.orderId}`
 }
