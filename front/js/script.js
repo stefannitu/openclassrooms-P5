@@ -5,16 +5,17 @@ const items = document.querySelector('#items');
 
 
 async function makeRequest() {
-    const response = await fetch(apiUri);
-    const data = await response.json();
-    return data;
+  const response = await fetch(apiUri);
+  const data = await response.json();
+  return data;
 }
 
 async function createDOM() {
-    let createHTML = '';
+  let createHTML = '';
+  try {
     const dataArray = await makeRequest();
     dataArray.forEach(element => {
-        createHTML += `
+      createHTML += `
         <a href="./product.html?id=${element._id}">
             <article>
               <img src="${element.imageUrl}" alt="${element.alt}">
@@ -23,7 +24,11 @@ async function createDOM() {
             </article>
           </a> `;
     });
-    items.innerHTML = createHTML;
+
+  } catch (error) {
+    items.innerHTML = `<article> <h3 class="productName">Something went wrong.</h3><p> We are investigating. Thank you for your understanding</p></article>`;
+  }
+  items.innerHTML += createHTML;
 }
 
 createDOM();

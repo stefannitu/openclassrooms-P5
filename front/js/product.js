@@ -10,11 +10,21 @@ function getUrl() {
     return currentId = searchParams.get('id');
 }
 
+
+//get data from API
 async function getProductData() {
     const productId = getUrl();
-    const response = await fetch(`http://127.0.0.1:3000/api/products/${productId}`);
-    const data = await response.json();
-    createHTML(data);
+    try {
+        const response = await fetch(`http://127.0.0.1:3000/api/products/${productId}`);
+        if (response.status == 404) {
+            throw new Error('Product not found')
+        }
+        const data = await response.json();
+        createHTML(data);
+    } catch (error) {
+        document.querySelector('article').innerHTML = `<p style=color:red;font-size:1.6rem;font-weight:bold>${error}</p>`
+    }
+
 }
 
 // insert in page data from api. 
@@ -46,7 +56,9 @@ const createHTML = (data) => {
 
 function createProductToStore() {
     if (!colors.value) {
+        alert("Please select color")
     } else if (quantity.value == '0') {
+        alert("Please select quantity")
     } else {
         const product = {
             productId: getUrl(),
@@ -85,6 +97,7 @@ function addDataToStorage(product) {
         localStorage.setItem('cart', JSON.stringify(cart));
 
     }
+    alert("Product added to cart")
     colors.selectedIndex = 0;
     quantity.value = 0;
 

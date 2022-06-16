@@ -14,7 +14,7 @@ let apiResponseData;
 //check if localstorage  has items
 function getItemsFromCart() {
     if (!localStorage.getItem('cart')) {
-        cart__items.innerHTML = "<p style='color:red;font-size:1.4rem;font-weight:bold;text-align:center'>There are no items in your cart</p>";
+        document.querySelector('.cart').innerHTML = "<p style='color:red;font-size:1.4rem;font-weight:bold;text-align:center'>There are no items in your cart</p>";
     } else {
         getDataFromApi()
     }
@@ -22,10 +22,16 @@ function getItemsFromCart() {
 
 //get data from API and call createHTML
 async function getDataFromApi() {
-    const api = 'http://127.0.0.1:3000/api/products/';
-    const response = await fetch(api);
-    apiResponseData = await response.json();
-    createHTML(apiResponseData);
+    try {
+        const api = 'http://127.0.0.1:3000/api/products/';
+        const response = await fetch(api);
+        apiResponseData = await response.json();
+        createHTML(apiResponseData);
+    } catch (error) {
+        document.querySelector('.cart').innerHTML = `<p style=color:red;font-size:1.6rem;font-weight:bold;text-align:center>There was an error in API request</p>`
+        console.log("test");
+    }
+
 }
 //create HTML forEach item in cart
 function createHTML(apiData) {
@@ -224,6 +230,7 @@ async function postToAPI(orderData) {
         body: JSON.stringify(orderData)
     });
     const data = await reponse.json();
+    console.log(data);
     confirmationPage(data);
 }
 
