@@ -7,13 +7,9 @@ function getOrderId() {
 
 //display orderid in page and remove cart from localstorage
 function showOrderId() {
-    let orderId = '';
-    const orderIdField = document.querySelector('#orderId');
-    orderId = getOrderId();
-    orderIdField.textContent = orderId;
-    if (orderId) {
-        // localStorage.removeItem('cart');
-    }
+    document.querySelector('#orderId').textContent = getOrderId();
+    localStorage.removeItem('cart');
 }
+
 showOrderId();
 

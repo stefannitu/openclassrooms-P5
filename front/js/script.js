@@ -3,7 +3,6 @@
 const apiUri = 'http://127.0.0.1:3000/api/products/';
 const items = document.querySelector('#items');
 
-
 async function makeRequest() {
   const response = await fetch(apiUri);
   const data = await response.json();

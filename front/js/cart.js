@@ -1,16 +1,16 @@
+//store data from API 
+let apiResponseData;
+
 //waiting for DOM
 document.addEventListener('DOMContentLoaded', getItemsFromCart);
 //on click or change run function
-[ 'click', 'change' ].forEach(e => document.addEventListener(e, findClass));
+document.addEventListener('click', findClass);
+document.addEventListener('change', findClass);
 
-const order = document.querySelector('.cart__order__form');
-const cart__items = document.querySelector('#cart__items');
+//on submit form
+document.querySelector('.cart__order__form').addEventListener('submit', validateForm);
 
-order.addEventListener('submit', validateForm);
-
-// let cart;
-let apiResponseData;
-
+//ENTRY POINT
 //check if localstorage  has items
 function getItemsFromCart() {
     if (!localStorage.getItem('cart')) {
@@ -29,17 +29,19 @@ async function getDataFromApi() {
         createHTML(apiResponseData);
     } catch (error) {
         document.querySelector('.cart').innerHTML = `<p style=color:red;font-size:1.6rem;font-weight:bold;text-align:center>There was an error in API request</p>`
-        console.log("test");
     }
 
 }
-//create HTML forEach item in cart
+//create HTML with data from both localstorage(cart) and API (apiData)
 function createHTML(apiData) {
-    let cart = JSON.parse(localStorage.getItem('cart'));
+    const cart = JSON.parse(localStorage.getItem('cart'));
+    const cart__items = document.querySelector('#cart__items');
+
     let articleHTML = '';
 
     cart.forEach(cartElement => {
-        const apiProductIndex = apiData.findIndex(data => data._id == cartElement.productId);
+        //find the index of each cartElement.productId  has in json retrieved from server
+        const apiProductIndex = apiData.findIndex(data => data._id === cartElement.productId);
         articleHTML += `
         <article class="cart__item" data-id="${cartElement.productId}" data-color="${cartElement.productColor}">
                 <div class="cart__item__img">
@@ -66,66 +68,37 @@ function createHTML(apiData) {
     })
     cart__items.innerHTML = articleHTML;
 
-    //HTML for cart TOTAL
+    //create HTML for cart TOTAL
     getPriceQuantity();
 }
 
+//get data from cart and do the maths for items total quantity an price
 function getPriceQuantity() {
     const totalQuantity = document.querySelector('#totalQuantity');
     const totalPrice = document.querySelector('#totalPrice');
-    let modifiedCart = JSON.parse(localStorage.getItem('cart'));
+    const modifiedCart = JSON.parse(localStorage.getItem('cart'));
     let totalCartArticles = 0;
     let totalCartPrice = 0;
-    if (!modifiedCart) {
-        cart__items.innerHTML = "<p style='color:red;font-size:1.4rem;font-weight:bold;text-align:center'>There are no items in your cart</p>";
-        totalQuantity.textContent = totalCartArticles;
-        totalPrice.textContent = totalCartPrice;
-        return;
-    }
 
+    //Find out how many items are in localstorage cart and their total value (from apiResponseData)    
     modifiedCart.forEach(cartElement => {
+        //find cart product index in apiResponseData
+        apiProductId = apiResponseData.findIndex(element => element._id === cartElement.productId)
         totalCartArticles += cartElement.productQuantity;
-        apiProductId = apiResponseData.findIndex(element => element._id == cartElement.productId)
         totalCartPrice += apiResponseData[ apiProductId ].price * cartElement.productQuantity;
-
     })
+
     totalQuantity.textContent = totalCartArticles;
     totalPrice.textContent = totalCartPrice;
 }
 
-
-function changeQuantity(parentArticle, action, currentItemQuantity) {
-    const currentProductId = parentArticle.dataset[ 'id' ]
-    const currentProductColor = parentArticle.dataset[ 'color' ];
-    let cart = JSON.parse(localStorage.getItem('cart'));
-    let productIndex = cart.findIndex(element => element.productId == currentProductId && element.productColor == currentProductColor);
-    // in case user click delete button or quantity = 0
-    //remove item from cart
-    //if we delete last item from cart then remove cart from localstorage
-    //else replace old localstorage cart with modified localstorage cart
-    if (action == 'DELETE') {
-        cart.splice(productIndex, 1);
-        if (cart.length == 0) {
-            localStorage.removeItem('cart');
-        } else {
-            localStorage.setItem('cart', JSON.stringify(cart));
-        }
-        //remove item from HTML
-        parentArticle.remove();
-
-    } else if (action == 'MODIFY') {
-        cart[ productIndex ].productQuantity = currentItemQuantity;
-        localStorage.setItem('cart', JSON.stringify(cart));
-    }
-    getPriceQuantity();
-}
-
-//check if click/change events target is delete button or quantity input
+//when user performs click or change event run function
 function findClass(event) {
+    //if the element clicked is the Delete button
     if (event.target.classList.contains('deleteItem')) {
         const currentArticle = event.target.closest('article');
         changeQuantity(currentArticle, 'DELETE');
-    } else if (event.target.classList.contains('itemQuantity')) {
+    } else if (event.type === 'change' && event.target.classList.contains('itemQuantity')) {
         const currentArticle = event.target.closest('article');
         const currentItemQuantity = parseInt(event.target.value);
         if (currentItemQuantity <= 0) {
@@ -133,10 +106,41 @@ function findClass(event) {
         } else {
             changeQuantity(currentArticle, 'MODIFY', currentItemQuantity);
         }
-
     }
 }
+//change quantity or remove item from localstorage and from HTML
+function changeQuantity(parentArticle, action, currentItemQuantity) {
+    //get current product id from HTML using data_id and data_color attributes
+    const currentProductId = parentArticle.dataset[ 'id' ]
+    const currentProductColor = parentArticle.dataset[ 'color' ];
+    //get data from localstorage 
+    const cart = JSON.parse(localStorage.getItem('cart'));
+    //find what index has in localstorage the element with current product id and current color 
+    let productIndex = cart.findIndex(element => element.productId === currentProductId && element.productColor === currentProductColor);
+    // if user click "delete button" or set field "Qte" to zero
+    //then remove corensponding item from cart
+    if (action === 'DELETE') {
+        //remove current item from cart Array
+        cart.splice(productIndex, 1);
+        //if last item is removed from cart then remove cart from localstorage
+        if (cart.length == 0) {
+            localStorage.removeItem('cart');
+            document.querySelector('.cart').innerHTML = "<p style='color:red;font-size:1.4rem;font-weight:bold;text-align:center'>There are no items in your cart</p>";
 
+        } else {
+            //else replace old localstorage cart with modified localstorage cart
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+        //remove item from HTML
+        parentArticle.remove();
+
+    } else if (action === 'MODIFY') {
+        cart[ productIndex ].productQuantity = currentItemQuantity;
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }
+    //run again TOTALS for number of items in cart and for total price
+    getPriceQuantity();
+}
 
 //validate form fields
 function validateForm(event) {
@@ -150,55 +154,42 @@ function validateForm(event) {
     let address = document.querySelector('#address');
     let formValidated = 1;
 
-    //check if pattern is valid
+    //create a nodelist with input fields except the one for address
     let textInputs = document.querySelectorAll('[type=text]:not(#address)');
+    //check if pattern is valid
     textInputs.forEach((element => {
-        if (INPUTPATTERN.test(element.value)) {
-            console.log(element.value);
-        }
-        else {
+        if (!INPUTPATTERN.test(element.value.trim())) {
             element.nextElementSibling.textContent = "Text should start with letter"
             formValidated = 0;
         }
     }))
-    if (EMAILPATTERN.test(email.value)) {
-    } else {
+
+    if (!EMAILPATTERN.test(email.value.trim()) || !ADRESSPATTERN.test(address.value.trim())) {
         email.nextElementSibling.textContent = "Text should start with letter"
         formValidated = 0;
     }
-    if (ADRESSPATTERN.test(address.value)) {
-    } else {
-        address.nextElementSibling.textContent = "Text should start with letter"
-        formValidated = 0;
-    }
+
     if (formValidated) {
-        checkForm()
-    } else {
-        console.log("form not validated");
+        dataForApi()
     }
 }
 
-// if form passed regex valdiation create object to POST
-function checkForm(event) {
-    const firstName = document.querySelector('#firstName').value;
-    const lastName = document.querySelector('#lastName').value;
-    const address = document.querySelector('#address').value;
-    const city = document.querySelector('#city').value;
-    const email = document.querySelector('#email').value;
-    const form = document.querySelector('.cart__order__form');
-    const textError = document.querySelectorAll('[id*=ErrorMsg]')
+// if form passed regex validation create object to POST
+function dataForApi(event) {
+    const firstName = document.querySelector('#firstName').value.trim();
+    const lastName = document.querySelector('#lastName').value.trim();
+    const address = document.querySelector('#address').value.trim();
+    const city = document.querySelector('#city').value.trim();
+    const email = document.querySelector('#email').value.trim();
+    // const form = document.querySelector('.cart__order__form');
+    // const textError = document.querySelectorAll('[id*=ErrorMsg]')
 
-
-    //create produt array using cart element id
-    const cart = JSON.parse(localStorage.getItem('cart'));
+    //create produts array using cart element id
     let products = [];
-    if (!cart) {
-        console.log('error');
-    } else {
-        cart.forEach(element => {
-            products.push(element.productId);
-        })
-    }
+    const cart = JSON.parse(localStorage.getItem('cart'));
+    cart.forEach(element => {
+        products.push(element.productId);
+    })
 
     //create contact object from input fields (ex: contact = {firstName:firstName,lastName:lastName} )
     const contact = {
@@ -210,18 +201,11 @@ function checkForm(event) {
         contact, products
     }
 
-
-    //delete form error messages and reset form fields
-    textError.forEach(element => element.textContent = '')
-    form.reset();
-
-    // console.log(orderData);
     postToAPI(orderData);
 }
 
 //POST to API
 async function postToAPI(orderData) {
-
     const reponse = await fetch('http://127.0.0.1:3000/api/products/order', {
         method: "POST",
         headers: {
@@ -230,7 +214,6 @@ async function postToAPI(orderData) {
         body: JSON.stringify(orderData)
     });
     const data = await reponse.json();
-    console.log(data);
     confirmationPage(data);
 }
 

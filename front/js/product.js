@@ -1,6 +1,9 @@
+document.addEventListener('DOMContentLoaded', getProductData)
+
 const colors = document.querySelector('#colors');
 const quantity = document.querySelector('#quantity');
 const addToCartButton = document.querySelector('#addToCart');
+addToCartButton.addEventListener('click', createProductToStore);
 let currentId;
 
 
@@ -9,7 +12,6 @@ function getUrl() {
     const searchParams = new URLSearchParams(window.location.search);
     return currentId = searchParams.get('id');
 }
-
 
 //get data from API
 async function getProductData() {
@@ -24,7 +26,6 @@ async function getProductData() {
     } catch (error) {
         document.querySelector('article').innerHTML = `<p style=color:red;font-size:1.6rem;font-weight:bold>${error}</p>`
     }
-
 }
 
 // insert in page data from api. 
@@ -53,7 +54,6 @@ const createHTML = (data) => {
     })
 }
 
-
 function createProductToStore() {
     if (!colors.value) {
         alert("Please select color")
@@ -70,23 +70,22 @@ function createProductToStore() {
 }
 
 function addDataToStorage(product) {
-    let cart = localStorage.getItem('cart');
-
     //if products in cart
     if (localStorage.getItem('cart')) {
-
-        let cart = JSON.parse(localStorage.getItem('cart'))
-
+        //array with objects from cart
+        const cart = JSON.parse(localStorage.getItem('cart'));
 
         //if productid and color same as current then
         //quantity change its value
-
         const cartIndex = cart.findIndex((element) => (element.productId == currentId && element.productColor == colors.value));
-
+        //if item is not in cart array then 
+        //push in array and rewrite cart array in localstorage
         if (cartIndex == -1) {
             cart.push(product);
             localStorage.setItem('cart', JSON.stringify(cart));
         } else {
+            //if item in localstorage then 
+            //update quantity in array and rewrite cart array in localstorage
             cart[ cartIndex ].productQuantity += parseInt(quantity.value);
             localStorage.setItem('cart', JSON.stringify(cart));
         }
@@ -103,6 +102,4 @@ function addDataToStorage(product) {
 
 }
 
-getProductData();
-addToCartButton.addEventListener('click', createProductToStore);
 
