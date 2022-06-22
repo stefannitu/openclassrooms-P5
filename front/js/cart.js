@@ -124,7 +124,6 @@ function changeQuantity(parentArticle, action, currentItemQuantity) {
     if (action === 'DELETE') {
         //remove current item from cart Array
         const newCart = cart.filter((element, index) => index !== productIndex);
-        // cart.splice(productIndex, 1);
         //if last item is removed from cart then remove cart from localstorage
         if (newCart.length == 0) {
             localStorage.removeItem('cart');
@@ -184,8 +183,6 @@ function dataForApi(event) {
     const address = document.querySelector('#address').value.trim();
     const city = document.querySelector('#city').value.trim();
     const email = document.querySelector('#email').value.trim();
-    // const form = document.querySelector('.cart__order__form');
-    // const textError = document.querySelectorAll('[id*=ErrorMsg]')
 
     //create produts array using cart element id
     let products = [];
