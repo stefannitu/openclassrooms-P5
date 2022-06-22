@@ -116,20 +116,23 @@ function changeQuantity(parentArticle, action, currentItemQuantity) {
     //get data from localstorage 
     const cart = JSON.parse(localStorage.getItem('cart'));
     //find what index has in localstorage the element with current product id and current color 
-    let productIndex = cart.findIndex(element => element.productId === currentProductId && element.productColor === currentProductColor);
+    let productIndex = cart.findIndex(element => {
+        return element.productId === currentProductId && element.productColor === currentProductColor
+    });
     // if user click "delete button" or set field "Qte" to zero
     //then remove corensponding item from cart
     if (action === 'DELETE') {
         //remove current item from cart Array
-        cart.splice(productIndex, 1);
+        const newCart = cart.filter((element, index) => index !== productIndex);
+        // cart.splice(productIndex, 1);
         //if last item is removed from cart then remove cart from localstorage
-        if (cart.length == 0) {
+        if (newCart.length == 0) {
             localStorage.removeItem('cart');
             document.querySelector('.cart').innerHTML = "<p style='color:red;font-size:1.4rem;font-weight:bold;text-align:center'>There are no items in your cart</p>";
 
         } else {
             //else replace old localstorage cart with modified localstorage cart
-            localStorage.setItem('cart', JSON.stringify(cart));
+            localStorage.setItem('cart', JSON.stringify(newCart));
         }
         //remove item from HTML
         parentArticle.remove();
